@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-stone-50 text-gray-800;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full;
+  }
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.15s ease-out;
+}
+
+/* ── Print styles (struk kasir) ─────────────────────────────────────── */
+@media print {
+  body { margin: 0; }
+  body > * { visibility: hidden !important; }
+  .struk-print-area,
+  .struk-print-area * {
+    visibility: visible !important;
+  }
+  .struk-print-area {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #fff;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
