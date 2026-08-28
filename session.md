@@ -12,6 +12,7 @@
 | Root Folder | `Kasir (Claude)/99foods-dashboard/` |
 | Stack | React + Vite + Tailwind CSS + Supabase |
 | Hosting (rencana) | Vercel (frontend) + Supabase (DB + Storage + Auth) |
+| GitHub Repo | https://github.com/OrganicoconutSugar/99FOODS (public, main branch) — sudah di-push |
 | Warna UI | Putih + Hijau Sage (`sage-500` = `#5c835c`) |
 | Mode | Light only (dark mode dihapus) |
 | Logo title/favicon | `src/assets/element/logo.png` (icon bubble 99 Food, RGBA transparan, 242×256px, 79 KB) — dipakai di `index.html` favicon & halaman Login (`Login.jsx` import via `useState` + `<img>`) |
@@ -255,6 +256,18 @@
 
 ## Hal yang Perlu Diperhatikan
 
+### GitHub & Deploy
+- **Repo**: https://github.com/OrganicoconutSugar/99FOODS (public)
+- Push pertama berhasil: 49 files (1 commit "test push" + 1 commit "Initial commit: 99Foods Dashboard")
+- **Deploy ke Vercel** (selanjutnya):
+  1. Buka https://vercel.com/new
+  2. Import `OrganicoconutSugar/99FOODS`
+  3. Framework: Vite (auto-detect)
+  4. **Environment Variables** (WAJIB untuk production):
+     - `VITE_SUPABASE_URL` = URL project Supabase baru (bukan project test)
+     - `VITE_SUPABASE_ANON_KEY` = Anon key project Supabase baru
+  5. Deploy
+
 ### Supabase SQL yang WAJIB dijalankan
 Jalankan `supabase_migration.sql` lengkap di SQL Editor sebelum pertama kali pakai. Mencakup:
 1. Restruktur tabel `resep` (drop & recreate)
@@ -303,3 +316,21 @@ Jalankan `supabase_migration.sql` lengkap di SQL Editor sebelum pertama kali pak
 - **Cetak struk** menggunakan `window.print()` dengan CSS `@media print` — cocok untuk thermal printer 80mm
 - **Build production** sudah diverifikasi berjalan tanpa error (`npm run build`)
 - **Blank screen fix**: ErrorBoundary + global handlers, fixed port 5173, verified headless Chrome render OK
+
+### GitHub & Vercel
+- Repo: https://github.com/OrganicoconutSugar/99FOODS
+- Push pertama (commit `d8fe274`): 49 files
+- Push README (commit `08851a3`): README.md lengkap dengan flowchart ASCII, branding logo, schema DB
+- Classic PAT `ghp_mkoNeGac...` berhasil (fine-grained PAT sebelumnya ditolak 403 karena tidak ada scope `Contents: Write`)
+- **Deploy Vercel** (sedang dilakukan user): import repo, framework Vite, env vars `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
+
+### README.md (GitHub)
+- Hero section dengan logo sidebar embedded dari raw GitHub URL
+- 5 badge tech stack (React, Vite, Tailwind, Supabase, License)
+- Flowchart ASCII alur aplikasi lengkap
+- Tabel 6 logo file branding (logo, logosidebar, omset, profit, modal, transaksi)
+- Schema DB diagram ASCII untuk 8 tabel
+- Setup section: local dev, build production, deploy Vercel
+- Logic bisnis: Profit Bersih (cash basis), Modal Terpakai, HPP auto, Stok auto-decrement
+- Known issues / future work roadmap
+- Footer link ke `session.md`
