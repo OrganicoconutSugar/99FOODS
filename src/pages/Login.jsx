@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import toast from 'react-hot-toast'
+import logo from '../assets/element/logo.png'
 
 export default function Login() {
   const { user, login } = useAuth()
@@ -34,8 +35,11 @@ export default function Login() {
     <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-36 h-36 mx-auto bg-sage-100 rounded-2xl flex items-center justify-center text-6xl mb-3">🍔</div>
-          <p className="text-gray-400 text-xs tracking-widest uppercase">99Foods</p>
+          <img
+            src={logo}
+            alt="99Foods"
+            className="w-36 h-36 mx-auto object-contain mb-3"
+          />
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 p-6">
