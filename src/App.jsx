@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ChatProvider } from './context/ChatContext'
 import AppLayout from './components/layout/AppLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -55,18 +56,20 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ErrorBoundary>
-          <AppRoutes />
-        </ErrorBoundary>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: { borderRadius: '10px', fontSize: '13px', border: '1px solid #e5e7eb' },
-          }}
-        />
-      </BrowserRouter>
+      <ChatProvider>
+        <BrowserRouter>
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: { borderRadius: '10px', fontSize: '13px', border: '1px solid #e5e7eb' },
+            }}
+          />
+        </BrowserRouter>
+      </ChatProvider>
     </AuthProvider>
   )
 }
