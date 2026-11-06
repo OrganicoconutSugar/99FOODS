@@ -2,13 +2,10 @@ import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
-import Chatbot from '../ui/Chatbot'
-import ChatbotButton from '../ui/ChatbotButton'
-import { useChat } from '../../context/ChatContext'
 import { supabase } from '../../lib/supabase'
+import './AppShell.css'
 
 export default function AppLayout() {
-  const { isOpen, setIsOpen } = useChat()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [lowStockCount, setLowStockCount] = useState(0)
@@ -30,7 +27,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="app-layout flex h-screen bg-stone-50 overflow-hidden">
+    <div className="app-layout flex h-[100dvh] bg-stone-50 overflow-hidden">
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar setMobileOpen={setMobileOpen} lowStockCount={lowStockCount} />
@@ -38,8 +35,6 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
-      <ChatbotButton />
-      <Chatbot open={isOpen} onClose={() => setIsOpen(false)} />
     </div>
   )
 }

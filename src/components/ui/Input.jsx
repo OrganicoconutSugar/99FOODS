@@ -1,12 +1,21 @@
+import { useId } from 'react'
+
 export default function Input({ label, error, className = '', ...props }) {
+  const generatedId = useId()
+  const { id, 'aria-describedby': describedBy, ...inputProps } = props
+  const controlId = id || generatedId
+  const errorId = `${controlId}-error`
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-sm font-medium text-gray-600">
+        <label htmlFor={controlId} className="text-sm font-medium text-gray-600">
           {label}
         </label>
       )}
       <input
+        id={controlId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={[describedBy, error && errorId].filter(Boolean).join(' ') || undefined}
         className={`
           w-full px-3 py-2 rounded-lg border text-sm
           bg-white border-gray-200 text-gray-800
@@ -17,9 +26,9 @@ export default function Input({ label, error, className = '', ...props }) {
           ${error ? 'border-red-300 focus:ring-red-300' : ''}
           ${className}
         `}
-        {...props}
+        {...inputProps}
       />
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p id={errorId} className="text-xs text-red-500">{error}</p>}
     </div>
   )
 }

@@ -17,10 +17,11 @@ window.addEventListener('error', (e) => {
           <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#ef4444" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         </div>
         <h2 style="font-size:18px;font-weight:600;color:#1f2937;margin-bottom:8px">Terjadi Kesalahan</h2>
-        <pre style="text-align:left;background:#111827;color:#86efac;padding:16px;border-radius:8px;font-size:11px;overflow:auto;max-height:240px;font-family:monospace;white-space:pre-wrap">${msg}\n\n${stack}</pre>
+        <pre id="error-details" style="text-align:left;background:#111827;color:#86efac;padding:16px;border-radius:8px;font-size:11px;overflow:auto;max-height:240px;font-family:monospace;white-space:pre-wrap"></pre>
         <button onclick="window.location.reload()" style="margin-top:16px;padding:8px 16px;background:#5c835c;color:white;border-radius:8px;font-size:14px;font-weight:500;border:none;cursor:pointer">Coba Lagi</button>
       </div>
     </div>`
+    root.querySelector("#error-details").textContent = [msg, stack].filter(Boolean).join("\n\n")
   }
 })
 

@@ -15,12 +15,13 @@
 | GitHub Repo | https://github.com/OrganicoconutSugar/99FOODS (public, main branch) — sudah di-push |
 | Warna UI | Putih + Hijau Sage (`sage-500` = `#5c835c`) |
 | Mode | Light only (dark mode dihapus) |
-| Logo title/favicon | `src/assets/element/logo.png` (icon bubble 99 Food, RGBA transparan, 242×256px, 79 KB) — dipakai di `index.html` favicon & halaman Login (`Login.jsx` import via `useState` + `<img>`) |
-| Logo sidebar | `src/assets/element/logosidebar.png` (full branding portrait, RGBA transparan, 512×640px, 146 KB) — dipakai di `Sidebar.jsx` header, teks "99Foods" dihapus |
-| Logo stat cards | `src/assets/element/omsetlogo.png`, `profitlogo.png`, `modallogo.png`, `transaksilogo.png` — dipakai di StatCard Dashboard & Laporan mengganti lucide icon |
+| Logo title/favicon | `src/assets/element/logo.png` (icon bubble 99 Food, RGBA transparan, 242×256px, 79 KB) — dipakai di `index.html` favicon & halaman Login (`Login.jsx` import via `import logo` + `<img>`) |
+| Logo sidebar | `src/assets/element/logo.png` diperbesar di `Sidebar.jsx`; tulisan "99Foods" ganda dihapus |
+| Ikon dashboard | `src/assets/element/dashboard-icon-atlas.png` dipakai sebagai sprite ikon glossy transparan untuk navigasi, ringkasan, laporan, dan kontrol terkait |
 | Reset Data Script | `supabase_reset.sql` — TRUNCATE semua tabel transaksional + DELETE storage.objects |
 | Stok Page | Label: "Stok Makanan" (bukan "Stok & HPP") — hanya CRUD menu + stok porsi, fitur Resep/HPP dihapus |
 | Chart Customization | `src/components/ui/ChartSettings.jsx` — 4 tema, 3 tipe chart, series toggle, persist di localStorage |
+| Mode Demo | Login lokal untuk menguji seluruh fitur operasional dengan data contoh tersimpan di browser tanpa akses ke data Supabase. |
 
 ---
 
@@ -51,7 +52,7 @@
     │   └── supabase.js           ← Supabase client
     │
     ├── context/
-    │   └── AuthContext.jsx       ← login/logout/session/uploadAvatar/removeAvatar
+    │   └── AuthContext.jsx       ← login/logout/session/uploadAvatar/removeAvatar/demo
     │
     ├── utils/
     │   └── format.js             ← formatRupiah, formatTanggal, generateKodeTransaksi, toInputDate
@@ -252,8 +253,6 @@
 - [x] Filter tabs (Dashboard, Penjualan): `overflow-x-auto` + `scrollbar-thin` untuk horizontal scroll aman
 - [x] Asset kompresi: `logo.png` 242×256 (79 KB), `logosidebar.png` 512×640 (146 KB)
 
----
-
 ## Hal yang Perlu Diperhatikan
 
 ### GitHub & Deploy
@@ -285,7 +284,6 @@ Jalankan `supabase_migration.sql` lengkap di SQL Editor sebelum pertama kali pak
 ### File Mati (sudah dihapus)
 - `MenuResep.jsx`, `StokBahan.jsx` — diganti `KasirMenu.jsx` + `StokHPP.jsx`
 - `ThemeContext.jsx` — dark mode sudah dihapus
-- `Chatbot.jsx` — chatbot tidak berfungsi, file sudah dihapus dari `src/components/`
 - `App.css` — CSS template Vite tidak dipakai
 - `src/hooks/` — direktori kosong
 - `public/favicon.svg`, `public/icons.svg` — tidak di-reference
@@ -321,8 +319,8 @@ Jalankan `supabase_migration.sql` lengkap di SQL Editor sebelum pertama kali pak
 - Repo: https://github.com/OrganicoconutSugar/99FOODS
 - Push pertama (commit `d8fe274`): 49 files
 - Push README (commit `08851a3`): README.md lengkap dengan flowchart ASCII, branding logo, schema DB
-- Classic PAT `ghp_mkoNeGac...` berhasil (fine-grained PAT sebelumnya ditolak 403 karena tidak ada scope `Contents: Write`)
-- **Deploy Vercel** (sedang dilakukan user): import repo, framework Vite, env vars `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
+- Push login fix (commit `cefa015`): login page pakai logo.png, hapus tulisan 99Foods
+- **Deploy Vercel** (sudah terhubung): import repo, framework Vite, env vars `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
 
 ### README.md (GitHub)
 - Hero section dengan logo sidebar embedded dari raw GitHub URL

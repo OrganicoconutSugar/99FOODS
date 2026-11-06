@@ -7,8 +7,9 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  X, BarChart2, LineChart, AreaChart, Settings, RotateCcw,
+  X, BarChart2, LineChart, AreaChart, RotateCcw,
 } from 'lucide-react'
+import DashboardIcon from './DashboardIcon'
 
 export const CHART_TYPES = [
   { value: 'bar',  label: 'Bar',  icon: BarChart2 },
@@ -151,7 +152,7 @@ export function ChartSettingsPanel({ bind }) {
         <div className="flex gap-2 flex-wrap">
           {[
             { key: 'omset', label: 'Omset', color: activeColors.omset },
-            { key: 'untung', label: 'Profit', color: activeColors.untung },
+            { key: 'untung', label: 'Laba Kas', color: activeColors.untung },
           ].map(s => (
             <button
               key={s.key}
@@ -230,7 +231,7 @@ export function ChartToggleButton({ bind }) {
       className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-sage-600 transition-colors flex-shrink-0"
       title="Pengaturan grafik"
     >
-      <Settings size={14} />
+      <DashboardIcon name="settings" size={25} />
     </button>
   )
 }

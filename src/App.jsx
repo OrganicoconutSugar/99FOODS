@@ -1,16 +1,19 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { ChatProvider } from './context/ChatContext'
 import AppLayout from './components/layout/AppLayout'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import KasirMenu from './pages/KasirMenu'
-import StokHPP from './pages/StokHPP'
-import PembelianBahan from './pages/PembelianBahan'
-import Penjualan from './pages/Penjualan'
-import Laporan from './pages/Laporan'
+import Landing from './pages/Landing'
 import ErrorBoundary from './components/ui/ErrorBoundary'
+
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const KasirMenu = lazy(() => import('./pages/KasirMenu'))
+const StokHPP = lazy(() => import('./pages/StokHPP'))
+const PembelianBahan = lazy(() => import('./pages/PembelianBahan'))
+const Penjualan = lazy(() => import('./pages/Penjualan'))
+const PesananDapur = lazy(() => import('./pages/PesananDapur'))
+const Laporan = lazy(() => import('./pages/Laporan'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -26,38 +29,41 @@ function ProtectedRoute({ children }) {
       </div>
     )
   }
-  return user ? children : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  return children
 }
 
 function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<div className="p-6 text-sm text-gray-400" role="status">Memuat halaman...</div>}>
+      <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route
-        path="/"
         element={
           <ProtectedRoute>
             <AppLayout />
           </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route path="app" element={<Dashboard />} />
         <Route path="menu"      element={<KasirMenu />} />
         <Route path="stok"      element={<StokHPP />} />
         <Route path="pembelian" element={<PembelianBahan />} />
         <Route path="penjualan" element={<Penjualan />} />
+        <Route path="dapur" element={<PesananDapur />} />
         <Route path="laporan"   element={<Laporan />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   )
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <ChatProvider>
-        <BrowserRouter>
+      <BrowserRouter>
           <ErrorBoundary>
             <AppRoutes />
           </ErrorBoundary>
@@ -68,8 +74,7 @@ export default function App() {
               style: { borderRadius: '10px', fontSize: '13px', border: '1px solid #e5e7eb' },
             }}
           />
-        </BrowserRouter>
-      </ChatProvider>
+      </BrowserRouter>
     </AuthProvider>
   )
 }

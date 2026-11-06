@@ -1,0 +1,25 @@
+.dashboard-icon {
+  display: inline-block;
+  flex: none;
+  background-image: url('../../assets/element/dashboard-icon-atlas.png');
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  vertical-align: middle;
+}
+
+.dashboard-icon--dashboard { background-position: 0% 0%; }
+.dashboard-icon--menu { background-position: 33.333% 0%; }
+.dashboard-icon--stock { background-position: 66.667% 0%; }
+.dashboard-icon--purchase { background-position: 100% 0%; }
+.dashboard-icon--sales { background-position: 0% 33.333%; }
+.dashboard-icon--kitchen { background-position: 33.333% 33.333%; }
+.dashboard-icon--report { background-position: 66.667% 33.333%; }
+.dashboard-icon--revenue { background-position: 100% 33.333%; }
+.dashboard-icon--expense { background-position: 0% 66.667%; }
+.dashboard-icon--profit { background-position: 33.333% 66.667%; }
+.dashboard-icon--transactions { background-position: 66.667% 66.667%; }
+.dashboard-icon--warning { background-position: 100% 66.667%; }
+.dashboard-icon--bell { background-position: 0% 100%; }
+.dashboard-icon--settings { background-position: 33.333% 100%; }
+.dashboard-icon--reset { background-position: 66.667% 100%; }
+.dashboard-icon--logout { background-position: 100% 100%; }

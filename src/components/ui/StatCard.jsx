@@ -1,16 +1,9 @@
+import { isValidElement } from 'react'
 import Card from './Card'
 
-export default function StatCard({ label, value, icon, color = 'sage', sub }) {
-  const colors = {
-    sage:   'bg-sage-50 text-sage-600',
-    green:  'bg-sage-50 text-sage-600',
-    blue:   'bg-sky-50 text-sky-600',
-    orange: 'bg-amber-50 text-amber-600',
-    red:    'bg-red-50 text-red-500',
-    purple: 'bg-violet-50 text-violet-600',
-  }
-
+export default function StatCard({ label, value, icon, sub }) {
   const renderIcon = () => {
+    if (isValidElement(icon)) return icon
     if (typeof icon === 'string') {
       return <img src={icon} alt="" className="w-6 h-6 object-contain" />
     }
@@ -22,7 +15,7 @@ export default function StatCard({ label, value, icon, color = 'sage', sub }) {
 
   return (
     <Card className="flex items-start gap-4 min-w-0">
-      <div className={`rounded-lg p-2.5 flex-shrink-0 ${colors[color]}`}>
+      <div className="stat-card-icon flex-shrink-0">
         {renderIcon()}
       </div>
       <div className="flex-1 min-w-0">

@@ -1,11 +1,18 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatRupiah, generateKodeTransaksi, toInputDate } from '../utils/format'
+import { saveTransaction } from '../lib/transactions'
+import { createPendingQris, confirmQris } from '../lib/posWorkflow'
+import { hasPosWorkflowSchema } from '../lib/posSchema'
+import { formatRupiah, toInputDate } from '../utils/format'
+import { createRequestId } from '../utils/requestId'
 import { Search, ShoppingCart, X, Plus, Minus, ImageOff, Printer, User, CreditCard } from 'lucide-react'
 import Button from '../components/ui/Button'
 import Select from '../components/ui/Select'
 import Input from '../components/ui/Input'
 import StrukPrint from '../components/ui/StrukPrint'
+import BluetoothPrintButton from '../components/ui/BluetoothPrintButton'
+import { useDialogFocus } from '../components/ui/useDialogFocus'
+import qrisImage from '../assets/qris-99foods.png'
 import toast from 'react-hot-toast'
 
 const CHANNELS = ['Tunai', 'QRIS', 'Ojek Online']
@@ -14,6 +21,7 @@ const CHANNELS = ['Tunai', 'QRIS', 'Ojek Online']
 function ItemPopup({ menu, onClose, onAddToCart }) {
   const [qty, setQty] = useState(1)
   const [stok, setStok] = useState(menu.stok_menu ?? null)
+  const dialogRef = useDialogFocus(true, onClose)
 
   useEffect(() => {
     setStok(menu.stok_menu ?? null)
@@ -30,8 +38,8 @@ function ItemPopup({ menu, onClose, onAddToCart }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/25" onClick={onClose} />
-      <div className="relative w-full sm:max-w-xs bg-white rounded-t-2xl sm:rounded-xl overflow-hidden">
+      <div className="absolute inset-0 bg-black/25" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`Tambah ${menu.nama}`} tabIndex={-1} className="relative w-full sm:max-w-xs bg-white rounded-t-2xl sm:rounded-xl overflow-hidden">
         {menu.gambar_url
           ? <img src={menu.gambar_url} alt={menu.nama} className="w-full h-40 object-cover" onError={e => e.target.style.display = 'none'} />
           : <div className="w-full h-28 bg-sage-50 flex items-center justify-center"><ImageOff size={28} className="text-sage-200" /></div>
@@ -39,18 +47,19 @@ function ItemPopup({ menu, onClose, onAddToCart }) {
         <div className="p-4">
           <div className="flex items-start justify-between gap-2 mb-1">
             <h2 className="text-base font-semibold text-gray-800">{menu.nama}</h2>
-            <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={15} /></button>
+            <button onClick={onClose} aria-label="Tutup pilihan menu" className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X size={15} /></button>
           </div>
           <p className="text-sage-600 font-medium text-sm mb-4">{formatRupiah(menu.harga_jual)}</p>
 
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2">
-              <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-gray-200 text-gray-500">
+              <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Kurangi porsi" className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-gray-200 text-gray-500">
                 <Minus size={13} />
               </button>
               <span className="text-sm font-bold text-gray-800 w-5 text-center">{qty}</span>
               <button
                 onClick={() => setQty(q => stok !== null ? Math.min(stok, q + 1) : q + 1)}
+                aria-label="Tambah porsi"
                 disabled={habis}
                 className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-gray-200 text-gray-500 disabled:opacity-30"
               >
@@ -99,12 +108,12 @@ function CartPanel({ items, onRemove, onChangeQty, onClear, onCheckout }) {
             <div key={item.id} className="flex items-center gap-2 px-4 py-2.5">
               <span className="flex-1 text-xs text-gray-700 truncate">{item.nama}</span>
               <div className="flex items-center gap-1">
-                <button onClick={() => onChangeQty(item.id, item.qty - 1)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"><Minus size={10} /></button>
+                <button onClick={() => onChangeQty(item.id, item.qty - 1)} aria-label={`Kurangi ${item.nama}`} className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"><Minus size={10} /></button>
                 <span className="text-xs font-medium text-gray-700 w-4 text-center">{item.qty}</span>
-                <button onClick={() => onChangeQty(item.id, item.qty + 1)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"><Plus size={10} /></button>
+                <button onClick={() => onChangeQty(item.id, item.qty + 1)} aria-label={`Tambah ${item.nama}`} className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"><Plus size={10} /></button>
               </div>
               <span className="text-xs text-sage-600 font-medium w-16 text-right">{formatRupiah(item.harga_jual * item.qty)}</span>
-              <button onClick={() => onRemove(item.id)} className="text-gray-300 hover:text-red-400"><X size={12} /></button>
+              <button onClick={() => onRemove(item.id)} aria-label={`Hapus ${item.nama}`} className="text-gray-300 hover:text-red-400"><X size={12} /></button>
             </div>
           ))}
         </div>
@@ -115,7 +124,7 @@ function CartPanel({ items, onRemove, onChangeQty, onClear, onCheckout }) {
             <p className="text-sm font-bold text-gray-800">{formatRupiah(total)}</p>
           </div>
           <Button size="sm" onClick={onCheckout}>
-            <Printer size={13} /> Cetak
+            <ShoppingCart size={13} /> Checkout
           </Button>
         </div>
       </div>
@@ -135,12 +144,12 @@ function CartPanel({ items, onRemove, onChangeQty, onClear, onCheckout }) {
               <div key={item.id} className="flex items-center gap-2 px-4 py-3">
                 <span className="flex-1 text-sm text-gray-700 truncate">{item.nama}</span>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => onChangeQty(item.id, item.qty - 1)} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 text-gray-500 border border-gray-200"><Minus size={12} /></button>
+                  <button onClick={() => onChangeQty(item.id, item.qty - 1)} aria-label={`Kurangi ${item.nama}`} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 text-gray-500 border border-gray-200"><Minus size={12} /></button>
                   <span className="text-sm font-semibold text-gray-800 w-6 text-center">{item.qty}</span>
-                  <button onClick={() => onChangeQty(item.id, item.qty + 1)} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 text-gray-500 border border-gray-200"><Plus size={12} /></button>
+                  <button onClick={() => onChangeQty(item.id, item.qty + 1)} aria-label={`Tambah ${item.nama}`} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 text-gray-500 border border-gray-200"><Plus size={12} /></button>
                 </div>
                 <span className="text-sm text-sage-600 font-semibold w-20 text-right">{formatRupiah(item.harga_jual * item.qty)}</span>
-                <button onClick={() => onRemove(item.id)} className="p-1.5 text-gray-300 hover:text-red-400"><X size={14} /></button>
+                <button onClick={() => onRemove(item.id)} aria-label={`Hapus ${item.nama}`} className="p-1.5 text-gray-300 hover:text-red-400"><X size={14} /></button>
               </div>
             ))}
           </div>
@@ -152,7 +161,7 @@ function CartPanel({ items, onRemove, onChangeQty, onClear, onCheckout }) {
             <span className="text-sm font-bold text-gray-800 ml-1">{formatRupiah(total)}</span>
           </button>
           <Button size="sm" onClick={onCheckout}>
-            <Printer size={13} /> Cetak
+            <ShoppingCart size={13} /> Checkout
           </Button>
         </div>
       </div>
@@ -161,58 +170,53 @@ function CartPanel({ items, onRemove, onChangeQty, onClear, onCheckout }) {
 }
 
 // ─── Checkout Modal ──────────────────────────────────────────────────────────
-function CheckoutModal({ items, onClose, onSuccess }) {
+function CheckoutModal({ items, requestId, onClose, onSuccess, onPending, workflowReady }) {
   const [namaCustomer, setNamaCustomer] = useState('')
+  const [catatan, setCatatan] = useState('')
   const [channel, setChannel] = useState('Tunai')
   const [saving, setSaving] = useState(false)
+  const [pendingOrder, setPendingOrder] = useState(null)
+  const [paymentVerified, setPaymentVerified] = useState(false)
+  const closeCheckout = () => {
+    if (saving) return
+    if (pendingOrder) onPending(pendingOrder)
+    else onClose()
+  }
+  const dialogRef = useDialogFocus(true, closeCheckout)
   const tanggal = toInputDate() // realtime hari ini
 
   const total = items.reduce((s, i) => s + i.harga_jual * i.qty, 0)
   const modal = items.reduce((s, i) => s + (i.hpp || 0) * i.qty, 0)
 
-  const handleSimpan = async () => {
-    if (items.length === 0) return
+  const orderItems = items.map(item => ({ menu_id: item.id, qty: item.qty }))
+
+  const ensurePendingQris = async () => {
+    if (pendingOrder) return pendingOrder
+    const result = await createPendingQris({ requestId, tanggal, namaCustomer, catatan, items: orderItems })
+    setPendingOrder(result)
+    return result
+  }
+
+  const handleSimpan = async (waitForPayment = false) => {
+    if (items.length === 0 || saving) return
     setSaving(true)
     try {
-      const kode = generateKodeTransaksi()
-
-      // 1. Insert header transaksi
-      const { data: trx, error: trxErr } = await supabase
-        .from('transaksi')
-        .insert({
-          kode,
-          tanggal,
-          channel,
-          nama_customer: namaCustomer.trim() || null,
-          total_omset: 0,
-          total_modal: 0,
+      if (channel === 'QRIS') {
+        const pending = await ensurePendingQris()
+        if (waitForPayment) {
+          onPending(pending)
+          return
+        }
+        const paid = await confirmQris(pending.transaksi.id)
+        toast.success(`Pembayaran ${paid.transaksi.kode} dikonfirmasi`)
+        onSuccess(paid)
+      } else {
+        const result = await saveTransaction({
+          requestId, tanggal, channel, namaCustomer, catatan, items: orderItems,
         })
-        .select()
-        .single()
-      if (trxErr) throw trxErr
-
-      // 2. Insert detail
-      const details = items.map(item => ({
-        transaksi_id: trx.id,
-        menu_id:      item.id,
-        nama_menu:    item.nama,
-        jumlah_porsi: item.qty,
-        harga_jual:   item.harga_jual,
-        hpp:          item.hpp || 0,
-      }))
-      const { error: detErr } = await supabase.from('transaksi_detail').insert(details)
-      if (detErr) throw detErr
-
-      // 3. Proses: potong stok_menu + hitung total
-      const { error: fnErr } = await supabase.rpc('proses_transaksi', { p_transaksi_id: trx.id })
-      if (fnErr) throw fnErr
-
-      // 4. Ambil data final untuk struk
-      const { data: finalTrx } = await supabase.from('transaksi').select('*').eq('id', trx.id).single()
-      const { data: finalDetail } = await supabase.from('transaksi_detail').select('*').eq('transaksi_id', trx.id)
-
-      toast.success(`Transaksi ${kode} disimpan`)
-      onSuccess({ transaksi: finalTrx, detail: finalDetail || [] })
+        toast.success(`Transaksi ${result.transaksi.kode} disimpan`)
+        onSuccess(result)
+      }
     } catch (err) {
       console.error('Checkout error:', err)
       toast.error(err.message || 'Gagal menyimpan transaksi')
@@ -223,28 +227,30 @@ function CheckoutModal({ items, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/25" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="absolute inset-0 bg-black/25" onClick={closeCheckout} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Konfirmasi Pesanan" tabIndex={-1} className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-base font-semibold text-gray-800">Konfirmasi Pesanan</h2>
             <p className="text-xs text-gray-400 mt-0.5">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
+          <button onClick={closeCheckout} disabled={saving} aria-label="Tutup konfirmasi" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4 scrollbar-thin">
           {/* Nama customer */}
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
+            <label htmlFor="checkout-customer" className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
               <User size={13} className="text-gray-400" /> Nama Customer
             </label>
             <input
+              id="checkout-customer"
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-sage-400"
               placeholder="Opsional — kosongkan jika tidak perlu"
               value={namaCustomer}
               onChange={e => setNamaCustomer(e.target.value)}
+              disabled={Boolean(pendingOrder)}
             />
           </div>
 
@@ -257,7 +263,8 @@ function CheckoutModal({ items, onClose, onSuccess }) {
               {CHANNELS.map(c => (
                 <button
                   key={c}
-                  onClick={() => setChannel(c)}
+                  onClick={() => { setChannel(c); setPaymentVerified(false) }}
+                  disabled={Boolean(pendingOrder) || (c === 'QRIS' && workflowReady !== true)}
                   className={`py-2.5 rounded-lg text-sm font-medium border transition-colors ${
                     channel === c
                       ? 'bg-sage-500 border-sage-500 text-white'
@@ -268,6 +275,26 @@ function CheckoutModal({ items, onClose, onSuccess }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {channel === 'QRIS' && (
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-center">
+              <p className="text-sm font-semibold text-sky-900">Pindai QRIS 99 FOODS QR</p>
+              <img src={qrisImage} alt="QRIS statis 99 FOODS QR untuk pembayaran" className="mx-auto mt-2 max-h-80 w-auto max-w-full object-contain bg-white" />
+              <p className="mt-2 text-sm font-semibold text-sky-900">Masukkan nominal {formatRupiah(total)}</p>
+              <p className="mt-1 text-xs text-sky-700">Periksa notifikasi dan nominal di BNI Merchant sebelum menekan Pembayaran Diterima. Gambar QRIS ini tidak mengonfirmasi pembayaran otomatis. Stok diperiksa ulang saat konfirmasi.</p>
+              {pendingOrder && <p className="mt-2 text-xs font-medium text-amber-700">Pesanan {pendingOrder.transaksi.kode} tersimpan dan menunggu pembayaran.</p>}
+              <label className="mt-3 flex items-start gap-2 text-left text-xs text-sky-900">
+                <input type="checkbox" checked={paymentVerified} onChange={e => setPaymentVerified(e.target.checked)} />
+                Saya sudah melihat notifikasi BNI Merchant dan nominalnya sesuai.
+              </label>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor="checkout-note" className="text-sm font-medium text-gray-600">Catatan untuk dapur (opsional)</label>
+            <input id="checkout-note" value={catatan} onChange={e => setCatatan(e.target.value)} disabled={Boolean(pendingOrder)}
+              placeholder="Contoh: tanpa sambal" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
           </div>
 
           {/* Daftar item */}
@@ -303,10 +330,17 @@ function CheckoutModal({ items, onClose, onSuccess }) {
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={onClose}>Batal</Button>
-          <Button className="flex-1" onClick={handleSimpan} loading={saving}>
-            <Printer size={14} /> Simpan & Cetak
-          </Button>
+          <Button variant="outline" className="flex-1" onClick={closeCheckout} disabled={saving}>{pendingOrder ? 'Tutup' : 'Batal'}</Button>
+          {channel === 'QRIS' ? (
+            <div className="flex-1 flex flex-col gap-2">
+              {!pendingOrder && <Button variant="outline" onClick={() => handleSimpan(true)} disabled={saving}>Simpan Menunggu</Button>}
+              <Button onClick={() => handleSimpan(false)} loading={saving} disabled={!paymentVerified}>Pembayaran Diterima</Button>
+            </div>
+          ) : (
+            <Button className="flex-1" onClick={() => handleSimpan(false)} loading={saving}>
+              <Printer size={14} /> Simpan & Cetak
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -316,6 +350,7 @@ function CheckoutModal({ items, onClose, onSuccess }) {
 // ─── Struk Modal (preview + print) ──────────────────────────────────────────
 function StrukModal({ transaksi, detail, onClose }) {
   const printRef = useRef()
+  const dialogRef = useDialogFocus(true, onClose)
 
   const handlePrint = () => {
     // Semua elemen disembunyikan via CSS @media print kecuali .struk-print-area
@@ -324,11 +359,11 @@ function StrukModal({ transaksi, detail, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/25" onClick={onClose} />
-      <div className="relative w-full sm:max-w-xs bg-white rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="absolute inset-0 bg-black/25" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Struk Transaksi" tabIndex={-1} className="relative w-full sm:max-w-xs bg-white rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-700">Struk Transaksi</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={15} /></button>
+          <button onClick={onClose} aria-label="Tutup struk" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={15} /></button>
         </div>
 
         {/* Preview struk di layar */}
@@ -369,11 +404,14 @@ function StrukModal({ transaksi, detail, onClose }) {
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-100 flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={onClose}>Tutup</Button>
-          <Button className="flex-1" onClick={handlePrint}>
-            <Printer size={14} /> Cetak Struk
-          </Button>
+        <div className="px-4 py-3 border-t border-gray-100 space-y-2">
+          <BluetoothPrintButton transaksi={transaksi} detail={detail} />
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={onClose}>Tutup</Button>
+            <Button className="flex-1" onClick={handlePrint}>
+              <Printer size={14} /> Cetak Browser
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -389,15 +427,22 @@ const KATEGORI_ALL = 'Semua'
 export default function KasirMenu() {
   const [menus, setMenus]           = useState([])
   const [loading, setLoading]       = useState(true)
+  const [fetchError, setFetchError] = useState('')
+  const [workflowReady, setWorkflowReady] = useState(null)
   const [search, setSearch]         = useState('')
   const [activeKat, setActiveKat]   = useState(KATEGORI_ALL)
   const [popup, setPopup]           = useState(null)
   const [cart, setCart]             = useState([])
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [struk, setStruk]           = useState(null)   // { transaksi, detail }
+  const checkoutRequestId = useRef(null)
+  if (checkoutRequestId.current === null) checkoutRequestId.current = createRequestId()
 
   useEffect(() => {
     fetchMenus()
+    hasPosWorkflowSchema(supabase).then(setWorkflowReady).catch(error => {
+      console.error('Gagal memeriksa skema POS:', error)
+    })
     const ch = supabase.channel('kasir-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menu' }, fetchMenus)
       .subscribe()
@@ -406,8 +451,10 @@ export default function KasirMenu() {
 
   const fetchMenus = async () => {
     setLoading(true)
-    const { data } = await supabase.from('menu').select('*').eq('aktif', true).order('kategori').order('nama')
-    setMenus(data || [])
+    setFetchError('')
+    const { data, error } = await supabase.from('menu').select('*').eq('aktif', true).order('kategori').order('nama')
+    if (error) setFetchError(error.message)
+    else setMenus(data || [])
     setLoading(false)
   }
 
@@ -417,6 +464,12 @@ export default function KasirMenu() {
     .filter(m => m.nama.toLowerCase().includes(search.toLowerCase()))
 
   const addToCart = (menu, qty) => {
+    const existing = cart.find(item => item.id === menu.id)
+    if (existing && menu.stok_menu != null && existing.qty + qty > menu.stok_menu) {
+      toast.error(`Stok ${menu.nama} hanya ${menu.stok_menu} porsi`)
+      return
+    }
+    checkoutRequestId.current = createRequestId()
     setCart(prev => {
       const ex = prev.find(i => i.id === menu.id)
       if (ex) return prev.map(i => i.id === menu.id ? { ...i, qty: i.qty + qty } : i)
@@ -425,12 +478,33 @@ export default function KasirMenu() {
     toast.success(`${menu.nama} ×${qty} ditambahkan`)
   }
 
-  const removeFromCart  = (id)       => setCart(prev => prev.filter(i => i.id !== id))
-  const changeQty       = (id, qty)  => qty <= 0 ? removeFromCart(id) : setCart(prev => prev.map(i => i.id === id ? { ...i, qty } : i))
-  const clearCart       = ()         => setCart([])
+  const removeFromCart = (id) => {
+    checkoutRequestId.current = createRequestId()
+    setCart(prev => prev.filter(i => i.id !== id))
+  }
+  const changeQty = (id, qty) => {
+    if (qty <= 0) return removeFromCart(id)
+    const menu = menus.find(item => item.id === id)
+    if (menu?.stok_menu != null && qty > menu.stok_menu) {
+      toast.error(`Stok ${menu.nama} hanya ${menu.stok_menu} porsi`)
+      return
+    }
+    checkoutRequestId.current = createRequestId()
+    setCart(prev => prev.map(i => i.id === id ? { ...i, qty } : i))
+  }
+  const clearCart = () => {
+    checkoutRequestId.current = createRequestId()
+    setCart([])
+  }
 
   const handleCheckoutSuccess = (data) => {
     setStruk(data)
+    setCheckoutOpen(false)
+    clearCart()
+  }
+
+  const handleCheckoutPending = (data) => {
+    toast.success(`Pesanan ${data.transaksi.kode} menunggu pembayaran`)
     setCheckoutOpen(false)
     clearCart()
   }
@@ -448,6 +522,7 @@ export default function KasirMenu() {
         <h1 className="text-xl font-semibold text-gray-800">Menu</h1>
         <p className="text-sm text-gray-400">Pilih menu yang dipesan</p>
       </div>
+      {workflowReady === false && <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800" role="status">QRIS menunggu pembayaran belum tersedia sampai database POS diperbarui.</div>}
 
       {/* Search + Filter kategori */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -456,6 +531,7 @@ export default function KasirMenu() {
           <input
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-100 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sage-300"
             placeholder="Cari menu..."
+            aria-label="Cari menu"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -489,6 +565,10 @@ export default function KasirMenu() {
               </div>
             </div>
           ))}
+        </div>
+      ) : fetchError ? (
+        <div className="text-center py-12 text-sm text-red-600" role="alert">
+          Gagal memuat menu: {fetchError} <button className="underline" onClick={fetchMenus}>Coba lagi</button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
@@ -553,8 +633,11 @@ export default function KasirMenu() {
       {checkoutOpen && (
         <CheckoutModal
           items={cart}
+          requestId={checkoutRequestId.current}
           onClose={() => setCheckoutOpen(false)}
           onSuccess={handleCheckoutSuccess}
+          onPending={handleCheckoutPending}
+          workflowReady={workflowReady}
         />
       )}
 

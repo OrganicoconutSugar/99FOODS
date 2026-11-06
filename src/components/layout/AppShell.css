@@ -1,0 +1,71 @@
+.dashboard-sidebar { border-right-color: #e5e7eb; }
+.dashboard-sidebar .sidebar-brand {
+  min-height: 82px;
+  background: #fff;
+}
+.dashboard-sidebar nav a { gap: 8px; }
+.dashboard-sidebar nav a .dashboard-icon { filter: drop-shadow(0 2px 3px rgb(0 0 0 / .08)); }
+.dashboard-sidebar nav h2 {
+  margin-top: 5px;
+  color: #7b837a;
+  font-family: 'Courier New', monospace;
+}
+.dashboard-sidebar nav a,
+.dashboard-sidebar button { border-radius: 0; }
+.dashboard-sidebar nav a { min-height: 42px; }
+.dashboard-sidebar nav a[aria-current="page"] { font-weight: 700; }
+.dashboard-navbar { min-height: 68px; }
+.app-layout [data-chart-toggle] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.navbar-context {
+  color: #292b27;
+  font: 800 11px/1 'Courier New', monospace;
+  letter-spacing: .07em;
+}
+.navbar-context span { color: #5c835c; padding: 0 8px; }
+.navbar-demo {
+  padding: 7px 9px;
+  border: 1px solid #cddccd;
+  color: #4a6b4a;
+  font: 700 11px/1 'Courier New', monospace;
+  text-transform: uppercase;
+}
+.app-layout main > div:not(.dashboard-page) h1 {
+  font: 900 clamp(32px, 3.2vw, 48px)/1 Impact, 'Arial Narrow', 'Arial Black', sans-serif;
+  letter-spacing: -.025em;
+  text-transform: uppercase;
+}
+.app-layout main > div:not(.dashboard-page) > div:first-child {
+  min-height: 110px;
+  padding: 22px 24px;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #5c835c;
+  background: #fff;
+}
+.app-layout main > div:not(.dashboard-page) > div:first-child h1 + p {
+  margin-top: 7px;
+  color: #6b7280;
+  font: 13px/1.45 'Courier New', monospace;
+}
+.app-layout main > div:not(.dashboard-page) th {
+  font: 700 11px/1.3 'Courier New', monospace;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.app-layout main > div:not(.dashboard-page) > div:first-child button {
+  border-radius: 0;
+}
+.app-layout main .rounded-xl,
+.app-layout main .rounded-lg,
+.app-layout main .rounded-md,
+.app-layout main button.rounded-full:not([title="Klik untuk ganti foto profile"]) {
+  border-radius: 0;
+}
+.app-layout main input,
+.app-layout main select,
+.app-layout main textarea {
+  border-radius: 0;
+}

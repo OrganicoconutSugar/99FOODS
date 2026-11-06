@@ -1,20 +1,25 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { DEMO_EMAIL, DEMO_PASSWORD, DEMO_SESSION_KEY, getDemoProfile, saveDemoProfile } from '../lib/demoSupabase'
 
 const AuthContext = createContext(null)
+export { DEMO_EMAIL, DEMO_PASSWORD }
+const demoUser = () => ({ id: 'demo-local', email: DEMO_EMAIL, user_metadata: getDemoProfile() })
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(() => sessionStorage.getItem(DEMO_SESSION_KEY) === '1' ? demoUser() : null)
+  const [isDemo, setIsDemo] = useState(() => sessionStorage.getItem(DEMO_SESSION_KEY) === '1')
+  const [loading, setLoading] = useState(() => sessionStorage.getItem(DEMO_SESSION_KEY) !== '1')
 
   useEffect(() => {
+    if (sessionStorage.getItem(DEMO_SESSION_KEY) === '1') return
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      if (sessionStorage.getItem(DEMO_SESSION_KEY) !== '1') setUser(session?.user ?? null)
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (sessionStorage.getItem(DEMO_SESSION_KEY) !== '1') setUser(session?.user ?? null)
       setLoading(false)
     })
 
@@ -22,12 +27,25 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = async (email, password) => {
+    if (email.trim().toLowerCase() === DEMO_EMAIL) {
+      if (password !== DEMO_PASSWORD) throw new Error('Password demo tidak sesuai')
+      sessionStorage.setItem(DEMO_SESSION_KEY, '1')
+      setIsDemo(true)
+      setUser(demoUser())
+      return { user: demoUser() }
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   }
 
   const logout = async () => {
+    if (isDemo) {
+      sessionStorage.removeItem(DEMO_SESSION_KEY)
+      setIsDemo(false)
+      setUser(null)
+      return
+    }
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   }
@@ -43,7 +61,14 @@ export function AuthProvider({ children }) {
     if (upErr) throw upErr
 
     const { data: urlData } = supabase.storage.from('menu-images').getPublicUrl(path)
-    const url = `${urlData.publicUrl}?t=${Date.now()}`
+    const url = isDemo ? urlData.publicUrl : `${urlData.publicUrl}?t=${Date.now()}`
+
+    if (isDemo) {
+      const metadata = { ...getDemoProfile(), avatar_url: url }
+      saveDemoProfile(metadata)
+      setUser({ ...user, user_metadata: metadata })
+      return url
+    }
 
     const { data, error: updErr } = await supabase.auth.updateUser({
       data: { avatar_url: url },
@@ -56,6 +81,12 @@ export function AuthProvider({ children }) {
   const removeAvatar = async () => {
     if (!user) throw new Error('Belum login')
     await supabase.storage.from('menu-images').remove([`avatars/${user.id}.jpg`])
+    if (isDemo) {
+      const metadata = { ...getDemoProfile(), avatar_url: null }
+      saveDemoProfile(metadata)
+      setUser({ ...user, user_metadata: metadata })
+      return
+    }
     const { data, error } = await supabase.auth.updateUser({
       data: { avatar_url: null },
     })
@@ -64,7 +95,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, uploadAvatar, removeAvatar }}>
+    <AuthContext.Provider value={{ user, loading, isDemo, login, logout, uploadAvatar, removeAvatar }}>
       {children}
     </AuthContext.Provider>
   )

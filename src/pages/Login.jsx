@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Link, Navigate } from 'react-router-dom'
+import { DEMO_EMAIL, DEMO_PASSWORD, useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import toast from 'react-hot-toast'
 import logo from '../assets/element/logo.png'
+import { ArrowLeft, ArrowUpRight } from 'lucide-react'
+import './Login.css'
 
 export default function Login() {
   const { user, login } = useAuth()
@@ -12,7 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/app" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -31,19 +33,33 @@ export default function Login() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <img
-            src={logo}
-            alt="99Foods"
-            className="w-36 h-36 mx-auto object-contain mb-3"
-          />
-        </div>
+  const fillDemo = () => {
+    setEmail(DEMO_EMAIL)
+    setPassword(DEMO_PASSWORD)
+  }
 
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-5">Masuk ke Dashboard</h2>
+  return (
+    <main className="login-page">
+      <section className="login-story">
+        <Link to="/" className="login-brand" aria-label="Kembali ke 99Foods">
+          <img src={logo} alt="" />
+          <span>99FOODS <b>|</b> 99FOODS</span>
+        </Link>
+        <div className="login-story-copy">
+          <p>UNTUK TIM 99FOODS</p>
+          <h1>SEMUA<br />LEBIH<br />RAPI.</h1>
+          <span>Kelola transaksi, stok, dan laporan dalam satu tempat.</span>
+        </div>
+        <Link to="/" className="login-back"><ArrowLeft size={16} /> Kembali ke halaman utama</Link>
+        <strong aria-hidden="true">99</strong>
+      </section>
+
+      <section className="login-form-side">
+        <div className="login-content">
+          <p className="login-eyebrow">AKSES DASHBOARD / 99FOODS</p>
+          <h2>SELAMAT<br />DATANG.</h2>
+          <p className="login-lead">Masuk untuk melihat aktivitas usahamu.</p>
+          <div className="login-form">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"
@@ -64,15 +80,20 @@ export default function Login() {
               required
             />
             <Button type="submit" className="w-full mt-1" loading={loading} size="lg">
-              Masuk
+              Masuk <ArrowUpRight size={18} />
             </Button>
           </form>
-        </div>
+          </div>
 
-        <p className="text-center text-xs text-gray-300 mt-5">
-          BUMC 99Foods
-        </p>
-      </div>
-    </div>
+        <div className="login-demo border border-sage-200 bg-sage-50 p-4 text-sm text-gray-700">
+          <p className="font-semibold">Coba semua fitur dengan akun demo</p>
+          <p className="mt-1 text-xs text-gray-500">Coba seluruh fitur dengan data contoh lokal yang terpisah dari toko.</p>
+          <p className="mt-3 font-mono text-xs break-all">{DEMO_EMAIL} / {DEMO_PASSWORD}</p>
+          <button type="button" onClick={fillDemo} className="mt-3 border-b-2 border-sage-600 pb-0.5 text-xs font-bold text-sage-700">Isi akun demo</button>
+        </div>
+        </div>
+        <p className="login-foot">BUMC 99Foods</p>
+      </section>
+    </main>
   )
 }

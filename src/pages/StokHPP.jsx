@@ -25,13 +25,16 @@ export default function StokHPP() {
   const [form, setForm]           = useState(emptyMenu)
   const [gambarUrl, setGambarUrl] = useState(null)
   const [saving, setSaving]       = useState(false)
+  const [fetchError, setFetchError] = useState('')
 
   useEffect(() => { fetchMenus() }, [])
 
   const fetchMenus = async () => {
     setLoading(true)
-    const { data } = await supabase.from('menu').select('*').order('nama')
-    setMenus(data || [])
+    setFetchError('')
+    const { data, error } = await supabase.from('menu').select('*').order('nama')
+    if (error) setFetchError(error.message)
+    else setMenus(data || [])
     setLoading(false)
   }
 
@@ -78,10 +81,8 @@ export default function StokHPP() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus menu ini?')) return
+    if (!confirm('Hapus menu ini? Riwayat transaksi lama akan tetap tersimpan.')) return
     try {
-      await supabase.from('transaksi_detail').delete().eq('menu_id', id)
-      await supabase.from('resep').delete().eq('menu_id', id)
       const { error } = await supabase.from('menu').delete().eq('id', id)
       if (error) throw error
       toast.success('Menu dihapus')
@@ -108,6 +109,7 @@ export default function StokHPP() {
         <input
           className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-100 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sage-300"
           placeholder="Cari menu..."
+          aria-label="Cari menu"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -116,6 +118,10 @@ export default function StokHPP() {
       {/* List */}
       {loading ? (
         <p className="text-center py-10 text-gray-300 text-sm">Memuat...</p>
+      ) : fetchError ? (
+        <Card className="text-center py-10 text-red-500 text-sm">
+          Gagal memuat menu: {fetchError} <button className="underline" onClick={fetchMenus}>Coba lagi</button>
+        </Card>
       ) : filtered.length === 0 ? (
         <Card className="text-center py-12">
           <UtensilsCrossed size={28} className="mx-auto text-gray-200 mb-2" />
@@ -154,10 +160,10 @@ export default function StokHPP() {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg hover:bg-sage-50 text-gray-300 hover:text-sage-500 transition-colors">
+                <button onClick={() => openEdit(m)} aria-label={`Edit ${m.nama}`} className="p-1.5 rounded-lg hover:bg-sage-50 text-gray-300 hover:text-sage-500 transition-colors">
                   <Pencil size={13} />
                 </button>
-                <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors">
+                <button onClick={() => handleDelete(m.id)} aria-label={`Hapus ${m.nama}`} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors">
                   <Trash2 size={13} />
                 </button>
               </div>

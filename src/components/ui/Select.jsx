@@ -1,12 +1,21 @@
+import { useId } from 'react'
+
 export default function Select({ label, error, children, className = '', ...props }) {
+  const generatedId = useId()
+  const { id, 'aria-describedby': describedBy, ...selectProps } = props
+  const controlId = id || generatedId
+  const errorId = `${controlId}-error`
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-sm font-medium text-gray-600">
+        <label htmlFor={controlId} className="text-sm font-medium text-gray-600">
           {label}
         </label>
       )}
       <select
+        id={controlId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={[describedBy, error && errorId].filter(Boolean).join(' ') || undefined}
         className={`
           w-full px-3 py-2 rounded-lg border text-sm
           bg-white border-gray-200 text-gray-800
@@ -16,11 +25,11 @@ export default function Select({ label, error, children, className = '', ...prop
           ${error ? 'border-red-300 focus:ring-red-300' : ''}
           ${className}
         `}
-        {...props}
+        {...selectProps}
       >
         {children}
       </select>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p id={errorId} className="text-xs text-red-500">{error}</p>}
     </div>
   )
 }

@@ -16,25 +16,18 @@ export function formatRupiah(amount) {
  */
 export function formatTanggal(dateStr) {
   if (!dateStr) return '-'
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? `${dateStr}T00:00:00` : dateStr
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(dateStr))
+  }).format(new Date(date))
 }
 
 /**
  * Format tanggal ke YYYY-MM-DD untuk input date
  */
 export function toInputDate(date = new Date()) {
-  return date.toISOString().split('T')[0]
-}
-
-/**
- * Generate kode transaksi unik
- */
-export function generateKodeTransaksi() {
-  const now = new Date()
-  const pad = (n) => String(n).padStart(2, '0')
-  return `TRX-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${Date.now().toString().slice(-5)}`
+  const pad = n => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }

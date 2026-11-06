@@ -14,9 +14,15 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![License](https://img.shields.io/badge/License-Private-FF6B6B)](LICENSE)
 
-[Demo](#-demo) • [Fitur](#-fitur-utama) • [Tech Stack](#-tech-stack) • [Setup](#-setup--deployment) • [Database](#-database-schema)
+[Akun Demo](#akun-demo) • [Fitur](#-fitur-utama) • [Tech Stack](#-tech-stack) • [Setup](#-setup--deployment) • [Database](#-database-schema)
 
 </div>
+
+---
+
+## Akun Demo
+
+Di halaman login, gunakan `demo@99foods.test` dengan password `99Foods-Coba2026!`, atau tekan **Isi akun demo**. Mode demo membuka seluruh halaman: Dashboard, Menu, Stok Makanan, Pembelian Bahan, Transaksi Penjualan, Pesanan Dapur, dan Laporan. Semua tambah/edit/hapus, checkout, QRIS, refund, status dapur, unggah foto, dan ekspor laporan memakai data contoh lokal yang tersimpan di browser. Gunakan **Reset data demo** di sidebar untuk mengembalikan data awal. Perubahan demo tidak mencapai Supabase atau data toko. Akun ini bukan akun Supabase untuk akses produksi.
 
 ---
 
@@ -26,7 +32,7 @@
 
 - 🛒 **Catat pesanan** dari menu makanan (Dimsum, Cireng, Minuman, dll)
 - 📊 **Pantau penjualan** real-time via Dashboard
-- 💰 **Hitung Profit otomatis** (Omset − Belanja Bahan)
+- 💰 **Hitung laba kas otomatis** (Omset − Belanja Bahan − Operasional)
 - 🖨️ **Cetak struk thermal** 80mm ke Bluetooth printer
 - 📈 **Export laporan Excel** untuk pembukuan
 
@@ -125,7 +131,9 @@ Cocok untuk: warung Dimsum, Cireng, snack, minuman, atau usaha kuliner dengan ka
 - Klik menu → popup qty dengan validasi stok realtime
 - **Cart floating**: desktop box / mobile bottom-bar + bottom-sheet
 - Checkout modal: input nama customer, channel bayar (Tunai/QRIS/Ojek Online)
-- **Cetak struk thermal 80mm** via `window.print()`
+- Saat QRIS dipilih, gambar QRIS statis 99 FOODS tampil dengan nominal pesanan. Kasir memeriksa BNI Merchant sebelum menandai pembayaran diterima.
+- Pesanan QRIS dapat disimpan sebagai **menunggu** tanpa mengurangi stok atau menambah omzet.
+- Cetak struk lewat browser atau printer Bluetooth Classic/BLE yang kompatibel; Bluetooth memerlukan HTTPS dan uji perangkat.
 
 ### 📦 Stok Makanan
 - CRUD menu (nama, kategori, harga, stok porsi, aktif)
@@ -142,24 +150,31 @@ Cocok untuk: warung Dimsum, Cireng, snack, minuman, atau usaha kuliner dengan ka
 - Search by kode/nama customer, filter per channel
 - Modal detail transaksi + cetak struk ulang
 - **Transaksi Manual** (input langsung tanpa kasir)
+- Konfirmasi/batalkan pesanan QRIS menunggu, refund penuh dengan alasan dan pilihan mengembalikan stok, serta riwayat perubahan status
+
+### 👨‍🍳 Pesanan Dapur
+- Antrean pesanan lunas dengan status Baru → Diproses → Siap → Diserahkan
+- Nomor transaksi, daftar item, customer, dan catatan dapur tampil di tiap kartu
+- Pembaruan antrean antarperangkat memakai Supabase Realtime
 
 ### 📈 Dashboard Real-time
 - Periode: Hari Ini / 7 Hari / Bulan Ini
-- 4 stat card custom dengan logo khusus per metrik
-- Chart tren Omset & Profit (customizable: tipe/tema/series/tinggi)
+- 4 stat card dengan ikon glossy transparan yang serasi dengan navigasi dashboard
+- Chart tren Omset & Laba Kas (customizable: tipe/tema/series/tinggi)
 - Panel warning **Stok < 5** (realtime dari `menu.stok_menu`)
 - Top 5 menu terlaris + 5 transaksi terbaru
 
 ### 📊 Laporan & Analitik
 - Filter tanggal (Dari–Sampai) + shortcut Bulan Ini/Bulan Lalu
-- Stat card Omset, Modal Terpakai (pembelian bahan), Profit Bersih, Pengeluaran
+- Stat card Omset, Modal Terpakai (pembelian bahan), Laba Bersih (Kas), Pengeluaran
 - Bar/Pie chart dengan **customization**:
   - **4 Tema Warna**: Sage 🌿, Ocean 🌊, Sunset 🌅, Mono 🖤
   - **3 Tipe Chart**: Bar / Line / Area
-  - **Series Toggle**: Omset / Profit (minimal 1 aktif)
+  - **Series Toggle**: Omset / Laba Kas (minimal 1 aktif)
   - **Tinggi Chart**: Pendek / Sedang / Tinggi / Sangat Tinggi
   - **LocalStorage persistence** per user
 - **Export Excel** 3 sheet: Ringkasan, Transaksi, Menu Terlaris
+- Pesanan menunggu/dibatalkan tidak masuk omzet; refund mengurangi omzet pada tanggal refund
 
 ### 👤 Profil & Autentikasi
 - Login email + password (Supabase Auth)
@@ -197,7 +212,7 @@ Cocok untuk: warung Dimsum, Cireng, snack, minuman, atau usaha kuliner dengan ka
 | **Auth** | Email + password login |
 | **Storage** | Bucket `menu-images` (foto menu + avatar) |
 | **Realtime** | Subscribe perubahan data (stok, transaksi) |
-| **RPC Functions** | `hitung_hpp()`, `proses_transaksi()` |
+| **RPC Functions** | `hitung_hpp()`, `simpan_transaksi()`, QRIS, refund, dan status dapur |
 
 ---
 
@@ -263,7 +278,7 @@ Cocok untuk: warung Dimsum, Cireng, snack, minuman, atau usaha kuliner dengan ka
 **Trigger & Function penting:**
 - `hitung_hpp(menu_id)` → Σ `resep.jumlah × resep.harga_per_satuan`
 - `trigger_update_hpp_on_resep_change` → auto-update `menu.hpp` saat resep berubah
-- `proses_transaksi(transaksi_id)` → potong `menu.stok_menu` + hitung total omset/modal
+- `simpan_transaksi(...)` → simpan transaksi atomik, validasi/potong `menu.stok_menu`, dan hitung total
 
 ---
 
@@ -306,8 +321,9 @@ npm install
 cp .env.example .env
 # Edit .env — isi VITE_SUPABASE_URL & VITE_SUPABASE_ANON_KEY
 
-# 4. Run database migration di Supabase SQL Editor
-#    (paste isi supabase_migration.sql)
+# 4. Siapkan database sesuai MIGRATION.md
+#    Instalasi baru: supabase_schema.sql → supabase_migration.sql → supabase_hardening.sql → supabase_pos_workflow.sql
+#    Database lama: jalankan supabase_hardening.sql lalu supabase_pos_workflow.sql setelah backup
 
 # 5. Create bucket 'menu-images' di Supabase Storage (Public)
 
@@ -347,6 +363,8 @@ npm run preview    # preview production build
 │
 ├── supabase_schema.sql       ← Schema awal (referensi)
 ├── supabase_migration.sql    ← ALTER/TRIGGER/RPC after schema awal
+├── supabase_hardening.sql    ← Role owner, checkout atomik, riwayat aman
+├── MIGRATION.md              ← Langkah penerapan database
 ├── supabase_reset.sql        ← TRUNCATE data uji coba (akun aman)
 ├── session.md                ← Catatan teknis & progres project
 │
@@ -356,13 +374,14 @@ npm run preview    # preview production build
     ├── index.css             ← Tailwind + print CSS + animasi
     │
     ├── lib/
-    │   └── supabase.js       ← Supabase client
+    │   ├── supabase.js       ← Supabase client
+    │   └── transactions.js   ← Checkout melalui RPC
     │
     ├── context/
     │   └── AuthContext.jsx   ← login/uploadAvatar/removeAvatar
     │
     ├── utils/
-    │   └── format.js         ← formatRupiah, formatTanggal, generateKodeTransaksi
+    │   └── format.js         ← formatRupiah, formatTanggal, toInputDate
     │
     ├── components/
     │   ├── layout/
@@ -422,11 +441,11 @@ npm run preview    # preview production build
 
 ## 🧮 Logika Bisnis
 
-### Profit Bersih (Cash Basis)
+### Laba Bersih (Basis Kas)
 ```
-Profit Bersih = Total Omset − Total Pembelian Bahan
+Laba Bersih (Kas) = Total Omset − Total Pembelian Bahan − Pengeluaran Operasional
 ```
-Bukan akrual (tidak hitung inventory), tapi cocok untuk usaha kecil yang ingin tahu cash flow harian.
+Ini rekap kas, bukan laba akrual. `transaksi.total_untung` tetap margin kotor per transaksi berdasarkan HPP, sehingga berbeda dari laba kas periode.
 
 ### Modal Terpakai
 ```
@@ -441,7 +460,7 @@ HPP per menu = SUM(resep.jumlah × resep.harga_per_satuan)
 Auto-update via trigger saat resep INSERT/UPDATE/DELETE.
 
 ### Stok Menu Berkurang Otomatis
-Saat checkout → `proses_transaksi()` kurangi `menu.stok_menu` per `jumlah_porsi`.
+Saat checkout → `simpan_transaksi()` memvalidasi dan mengunci stok, menyimpan header dan detail, lalu mengurangi `menu.stok_menu` dalam satu transaksi database. Permintaan berulang dengan ID yang sama mengembalikan transaksi yang sudah dibuat.
 
 ---
 
@@ -451,7 +470,7 @@ Saat checkout → `proses_transaksi()` kurangi `menu.stok_menu` per `jumlah_pors
 - [ ] Notifikasi stok via WhatsApp/Telegram bot
 - [ ] Manajemen pre-order terintegrasi
 - [ ] Upload foto via kamera HP (mobile)
-- [ ] Paging/infinite scroll untuk tabel transaksi banyak data
+- [x] Pagination server untuk tabel transaksi dan pengambilan bertahap untuk rekap/ekspor
 - [ ] Edit transaksi yang sudah dibuat
 - [ ] Hapus transaksi di Penjualan
 
