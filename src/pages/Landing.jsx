@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react'
 import logo from '../assets/element/logo.png'
+import packagedFood from '../assets/landing/produk-kemasan.jpg'
+import bowlFood from '../assets/landing/sajian-mangkuk.jpg'
+import foodCollection from '../assets/landing/aneka-produk.jpg'
+import foodPromo from '../assets/landing/promo-99foods.png'
+import squarePastry from '../assets/landing/cutout-pastry-square.png'
+import pastel from '../assets/landing/cutout-pastel.png'
+import dimsum from '../assets/landing/cutout-dimsum.png'
 import './Landing.css'
 
 const slides = [
@@ -13,17 +20,21 @@ const slides = [
     caption: 'Cerita 99Foods',
     color: 'orange',
     art: '01',
-    image: null,
+    image: packagedFood,
+    imageAlt: 'Aneka sajian 99Foods dalam kemasan',
+    photoLabel: 'PILIHAN 99FOODS',
   },
   {
     id: 'menu',
     eyebrow: 'Pilihan untuk dinikmati',
     title: <>TEMUKAN<br />FAVORIT<br />BARU.</>,
-    subtitle: 'Ruang untuk foto menu dan sajian andalan 99Foods.',
+    subtitle: 'Sajian pilihan 99Foods untuk dinikmati kapan saja.',
     caption: 'Menu & sajian',
     color: 'sage',
     art: '02',
-    image: null,
+    image: bowlFood,
+    imageAlt: 'Sajian 99Foods dalam mangkuk',
+    photoLabel: 'SIAP DINIKMATI',
   },
   {
     id: 'dapur',
@@ -33,7 +44,9 @@ const slides = [
     caption: 'Dari dapur',
     color: 'red',
     art: '03',
-    image: null,
+    image: foodCollection,
+    imageAlt: 'Beragam makanan yang disiapkan 99Foods',
+    photoLabel: 'DARI DAPUR KAMI',
   },
   {
     id: 'kasir',
@@ -43,7 +56,9 @@ const slides = [
     caption: 'Dashboard kasir',
     color: 'ink',
     art: '04',
-    image: null,
+    image: foodPromo,
+    imageAlt: 'Foto promosi makanan 99Foods',
+    photoLabel: 'PESAN & NIKMATI',
   },
 ]
 
@@ -111,16 +126,17 @@ export default function Landing() {
                 {index === slides.length - 1 && <Link className="landing-primary" to="/login">Buka Dashboard <ArrowUpRight size={19} aria-hidden="true" /></Link>}
               </div>
             </div>
-            <div className="landing-art" aria-label={slide.image ? `Foto ${slide.caption}` : 'Tempat foto 99Foods yang akan ditambahkan'}>
+            <div className="landing-art" aria-label={`Foto ${slide.caption}`}>
+              <div className="landing-art-backdrop" style={{ backgroundImage: index === active ? `url(${slide.image})` : undefined }} aria-hidden="true" />
               <div className="landing-art-number" aria-hidden="true">{slide.art}</div>
-              <div className={`landing-photo-slot${slide.image ? ' has-image' : ''}`}>
-                {slide.image && <img src={slide.image} alt={slide.caption} />}
-                <span className="landing-slot-corner landing-slot-corner--tl" />
-                <span className="landing-slot-corner landing-slot-corner--tr" />
-                <span className="landing-slot-corner landing-slot-corner--bl" />
-                <span className="landing-slot-corner landing-slot-corner--br" />
-                {!slide.image && <><span>FOTO 99FOODS</span><small>Area foto pilihanmu</small></>}
-              </div>
+              <figure className="landing-photo-slot has-image">
+                <img src={slide.image} alt={slide.imageAlt} loading={index === 0 ? 'eager' : 'lazy'} decoding="async" />
+                <figcaption><span>{slide.photoLabel}</span><span>99 / {slide.art}</span></figcaption>
+              </figure>
+              <img className="landing-snack landing-snack--square" src={squarePastry} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+              <img className="landing-snack landing-snack--pastel" src={pastel} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+              <img className="landing-snack landing-snack--dimsum" src={dimsum} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+              <span className="landing-art-kicker" aria-hidden="true">RASA • CERITA • 99FOODS</span>
               <span className="landing-art-wordmark">99FOODS</span>
             </div>
           </section>

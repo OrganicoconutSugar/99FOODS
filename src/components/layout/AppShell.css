@@ -1,8 +1,9 @@
 .dashboard-sidebar { border-right-color: #e5e7eb; }
 .dashboard-sidebar .sidebar-brand {
-  min-height: 82px;
+  min-height: 112px;
   background: #fff;
 }
+.dashboard-sidebar.w-14 .sidebar-brand { min-height: 82px; }
 .dashboard-sidebar nav a { gap: 8px; }
 .dashboard-sidebar nav a .dashboard-icon { filter: drop-shadow(0 2px 3px rgb(0 0 0 / .08)); }
 .dashboard-sidebar nav h2 {

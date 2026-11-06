@@ -45,11 +45,11 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
   const renderNavContent = (isCollapsed) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className={`sidebar-brand flex items-center px-3 py-2 border-b border-gray-100 ${isCollapsed ? 'px-2' : ''}`}>
+      <div className={`sidebar-brand flex items-center justify-center px-3 py-2 border-b border-gray-100 ${isCollapsed ? 'px-2' : ''}`}>
         <img
           src={logo}
           alt="99Foods"
-          className={isCollapsed ? 'w-11 h-11 object-contain flex-shrink-0 mx-auto' : 'w-16 h-16 object-contain flex-shrink-0'}
+          className={isCollapsed ? 'w-9 h-9 object-contain flex-shrink-0 mx-auto' : 'w-24 h-24 object-contain flex-shrink-0 mx-auto'}
         />
       </div>
 
