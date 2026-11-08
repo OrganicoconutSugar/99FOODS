@@ -11,6 +11,9 @@ import pastel from '../assets/landing/cutout-pastel.png'
 import dimsum from '../assets/landing/cutout-dimsum.png'
 import './Landing.css'
 
+const INTRO_EXIT_MS = 780
+const INTRO_VIDEO = '/videos/99foods-intro-landscape.mp4'
+
 const slides = [
   {
     id: 'rasa',
@@ -62,11 +65,61 @@ const slides = [
   },
 ]
 
+function LandingIntro({ onComplete }) {
+  const [isExiting, setIsExiting] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
+  const finishTimer = useRef(null)
+  const isFinishing = useRef(false)
+
+  const finishIntro = useCallback(() => {
+    if (isFinishing.current) return
+    isFinishing.current = true
+    setIsExiting(true)
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    finishTimer.current = window.setTimeout(onComplete, reduceMotion ? 30 : INTRO_EXIT_MS)
+  }, [onComplete])
+
+  useEffect(() => () => {
+    if (finishTimer.current) window.clearTimeout(finishTimer.current)
+  }, [])
+
+  return (
+    <section className={`landing-intro${isExiting ? ' is-exiting' : ''}`} aria-label="Video pembuka 99Foods">
+      <video
+        className="landing-intro-video"
+        src={INTRO_VIDEO}
+        autoPlay
+        muted={isMuted}
+        playsInline
+        preload="auto"
+        onEnded={finishIntro}
+        onError={finishIntro}
+      />
+
+      <div className="landing-intro-top" aria-hidden="true">
+        <span>99FOODS</span>
+        <span>Rasa yang dekat</span>
+      </div>
+
+      <div className="landing-intro-controls">
+        <button type="button" onClick={() => setIsMuted((muted) => !muted)}>
+          {isMuted ? 'Nyalakan suara' : 'Matikan suara'}
+        </button>
+        <button type="button" onClick={finishIntro}>Lewati intro</button>
+      </div>
+    </section>
+  )
+}
+
 export default function Landing() {
   const [active, setActive] = useState(0)
+  const [showIntro, setShowIntro] = useState(true)
   const activeRef = useRef(0)
   const wheelTime = useRef(0)
   const startX = useRef(null)
+
+  const completeIntro = useCallback(() => setShowIntro(false), [])
 
   const goTo = useCallback((index) => {
     const next = Math.max(0, Math.min(slides.length - 1, index))
@@ -106,6 +159,8 @@ export default function Landing() {
 
   return (
     <main className="landing" onWheel={onWheel} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { startX.current = null }}>
+      {showIntro && <LandingIntro onComplete={completeIntro} />}
+
       <header className="landing-header">
         <Link to="/" className="landing-brand" aria-label="99Foods, kembali ke awal" onClick={() => goTo(0)}>
           <img src={logo} alt="" />
